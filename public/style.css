@@ -47,7 +47,6 @@ canvas#game {
   display: none !important;
 }
 
-/* ===== 大廳 ===== */
 #lobby {
   position: absolute;
   inset: 0;
@@ -218,7 +217,6 @@ button.primary:hover:not(:disabled) {
   border-radius: 50%;
 }
 
-/* ===== 房間面板（左上角） ===== */
 #room-panel {
   position: absolute;
   top: 12px;
@@ -331,7 +329,6 @@ button.primary:hover:not(:disabled) {
   font-variant-numeric: tabular-nums;
 }
 
-/* ===== 右上角面板 ===== */
 #top-right {
   position: absolute;
   top: 12px;
@@ -353,7 +350,6 @@ button.primary:hover:not(:disabled) {
   line-height: 1.2;
 }
 
-/* ===== 等待房主開始面板 ===== */
 #waiting-panel {
   position: absolute;
   top: 16px;
@@ -396,7 +392,6 @@ button.primary:hover:not(:disabled) {
   background: #2ea043;
 }
 
-/* ===== 每波三選一永久強化 ===== */
 #upgrade-overlay {
   position: absolute;
   inset: 0;
@@ -485,4 +480,54 @@ button.primary:hover:not(:disabled) {
   border-color: var(--c, #3fb950);
   background: rgba(63, 185, 80, 0.12);
   opacity: 1;
+}
+
+.upg-card.dim {
+  opacity: 0.4;
+}
+
+.upg-key {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: #21262d;
+  border: 1px solid #30363d;
+  font-size: 12px;
+  color: #8b949e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upg-icon {
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+.upg-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c, #e6edf3);
+}
+
+.upg-desc {
+  font-size: 13px;
+  color: #c9d1d9;
+  line-height: 1.4;
+}
+
+.upg-level {
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 12px;
+  color: #8b949e;
+}
+
+#upgrade-status {
+  font-size: 13px;
+  color: #8b949e;
+  text-align: center;
 }
