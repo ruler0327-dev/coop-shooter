@@ -3,399 +3,80 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Co-op Shooter - Phase 4</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    /* 讓 hidden 屬性永遠生效（不被 display 設定覆蓋） */
-    [hidden] {
-      display: none !important;
-    }
-
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      background: #0e1117;
-      color: #e6edf3;
-      font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif;
-      overflow: hidden;
-    }
-
-    /* ===== 遊戲區 ===== */
-    #wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-      gap: 8px;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    #hud {
-      font-size: 14px;
-      opacity: 0.85;
-    }
-
-    /* 舞台尺寸由 --ar（世界寬高比，進房後由 game.js 依伺服器設定覆寫）決定，
-       這樣左上的房間面板可以穩穩貼在畫面左上角 */
-    #stage {
-      --ar: 1.7778;
-      position: relative;
-      width: min(98vw, calc(90vh * var(--ar)));
-      aspect-ratio: var(--ar);
-      background: #161b22;
-      border: 2px solid #30363d;
-      border-radius: 6px;
-      overflow: hidden;
-    }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      cursor: crosshair;
-      touch-action: none;
-    }
-
-    /* ===== 房間面板（左上角：房號、人數、按鈕、記分板）===== */
-    #room-panel {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      width: 270px;
-      padding: 10px;
-      background: rgba(13, 17, 23, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 8px;
-      z-index: 2;
-    }
-
-    .room-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 8px;
-    }
-
-    #room-code {
-      font-size: 17px;
-      font-weight: 700;
-      letter-spacing: 1px;
-    }
-
-    #room-count {
-      font-size: 13px;
-      color: #8b949e;
-    }
-
-    .room-actions {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .room-actions .btn {
-      flex: 1;
-      padding: 5px 8px;
-      font-size: 12px;
-    }
-
-    .sb-row {
-      display: grid;
-      grid-template-columns: 12px minmax(0, 1fr) auto auto;
-      gap: 8px;
-      align-items: center;
-      padding: 3px 4px;
-      border-radius: 4px;
-      font-size: 13px;
-    }
-
-    .sb-row.me {
-      background: rgba(255, 255, 255, 0.09);
-      font-weight: 600;
-    }
-
-    .sb-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-    }
-
-    .sb-name {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .sb-status {
-      min-width: 48px;
-      text-align: right;
-      color: #8b949e;
-    }
-
-    .sb-status.down {
-      color: #f85149;
-    }
-
-    .sb-kills {
-      min-width: 54px;
-      text-align: right;
-      color: #ffd43b;
-    }
-
-    /* ===== 通用按鈕 / 輸入框 ===== */
-    .btn {
-      appearance: none;
-      border: 1px solid #30363d;
-      background: #21262d;
-      color: #e6edf3;
-      font: inherit;
-      font-size: 14px;
-      padding: 9px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s, opacity 0.15s;
-    }
-
-    .btn:hover:not(:disabled) {
-      background: #30363d;
-      border-color: #484f58;
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .btn.primary {
-      background: #238636;
-      border-color: #2ea043;
-      color: #ffffff;
-      font-weight: 600;
-    }
-
-    .btn.primary:hover:not(:disabled) {
-      background: #2ea043;
-      border-color: #3fb950;
-    }
-
-    .btn.danger:hover:not(:disabled) {
-      background: #5a1e1e;
-      border-color: #f85149;
-    }
-
-    input[type="text"] {
-      width: 100%;
-      font: inherit;
-      font-size: 15px;
-      padding: 9px 12px;
-      color: #e6edf3;
-      background: rgba(13, 17, 23, 0.8);
-      border: 1px solid #30363d;
-      border-radius: 6px;
-      outline: none;
-      /* Safari 在 user-select: none 的元素內無法輸入，所以明確指定可選取 */
-      user-select: text;
-      -webkit-user-select: text;
-    }
-
-    input[type="text"]:focus {
-      border-color: #58a6ff;
-      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
-    }
-
-    /* ===== 大廳 ===== */
-    #lobby {
-      position: fixed;
-      inset: 0;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(14, 17, 23, 0.78);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-
-    .card {
-      width: 92%;
-      max-width: 400px;
-      padding: 28px 26px 24px;
-      background: rgba(22, 27, 34, 0.88);
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    }
-
-    .card h1 {
-      margin: 0 0 4px;
-      font-size: 24px;
-      text-align: center;
-    }
-
-    .card .sub {
-      margin: 0 0 20px;
-      font-size: 13px;
-      text-align: center;
-      color: #8b949e;
-    }
-
-    .card label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 13px;
-      color: #8b949e;
-    }
-
-    .row {
-      display: flex;
-      gap: 8px;
-    }
-
-    .row .btn {
-      white-space: nowrap;
-    }
-
-    #create-btn {
-      width: 100%;
-      margin-top: 14px;
-    }
-
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 18px 0;
-      font-size: 12px;
-      color: #6e7681;
-    }
-
-    .divider::before,
-    .divider::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: #30363d;
-    }
-
-    #room-input {
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      font-weight: 600;
-    }
-
-    #room-input::placeholder {
-      text-transform: none;
-      letter-spacing: normal;
-      font-weight: 400;
-    }
-
-    #lobby-error {
-      min-height: 20px;
-      margin-top: 14px;
-      font-size: 13px;
-      line-height: 1.5;
-      color: #f85149;
-    }
-
-    #lobby-status {
-      min-height: 18px;
-      margin-top: 2px;
-      font-size: 12px;
-      text-align: center;
-      color: #8b949e;
-    }
-
-    /* 道具圖例 */
-    .legend {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 6px 16px;
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px solid #30363d;
-      font-size: 12px;
-      color: #8b949e;
-    }
-
-    .legend span {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .legend i {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-    }
-  </style>
+  <title>Co-op Shooter</title>
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <div id="wrapper">
-    <div id="hud">連線中…</div>
+  <div id="stage">
+    <canvas id="game" width="1600" height="900"></canvas>
 
-    <div id="stage">
-      <canvas id="game" width="1280" height="720"></canvas>
+    <!-- 房間內：左上角房號、邀請連結與記分板 -->
+    <div id="room-panel" hidden>
+      <div class="room-head">
+        <span id="room-code">房號 ----</span>
+        <span id="room-count">人數 1/4</span>
+        <button id="copy-btn" type="button">複製邀請連結</button>
+        <button id="leave-btn" type="button">離開</button>
+      </div>
+      <div id="scoreboard"></div>
+    </div>
 
-      <!-- 房間面板：進入房間後才顯示 -->
-      <div id="room-panel" hidden>
-        <div class="room-head">
-          <span id="room-code">房號 ----</span>
-          <span id="room-count">人數 0/4</span>
+    <!-- 房間內：右上角怪物數量與靜音按鈕 -->
+    <div id="top-right" hidden>
+      <span id="monster-count">怪物 0/30</span>
+      <button id="mute-btn" type="button" aria-pressed="false" title="音效開啟中（M）">🔊</button>
+    </div>
+
+    <!-- 房間內：等待房主開始遊戲的面板 -->
+    <div id="waiting-panel" hidden>
+      <div id="waiting-title">等待房主開始遊戲…</div>
+      <div id="waiting-sub">先熟悉一下操作，可以自由移動與試射</div>
+      <button id="start-btn" type="button" hidden>開始遊戲</button>
+    </div>
+
+    <!-- 每波結束：三選一永久強化覆蓋層 -->
+    <div id="upgrade-overlay" hidden>
+      <div class="upg-box">
+        <div class="upg-head">
+          <div id="upgrade-title">WAVE 1 完成！選擇一項永久強化</div>
+          <div id="upgrade-timer">15</div>
         </div>
-        <div class="room-actions">
-          <button id="copy-btn" class="btn" type="button">複製房號</button>
-          <button id="leave-btn" class="btn danger" type="button">離開房間</button>
-        </div>
-        <div id="scoreboard"></div>
+        <div id="upgrade-cards"></div>
+        <div id="upgrade-status">點擊卡片，或按鍵盤 1 / 2 / 3</div>
       </div>
     </div>
-  </div>
 
-  <!-- 大廳：登入卡片 -->
-  <div id="lobby">
-    <div class="card">
-      <h1>Co-op Shooter</h1>
-      <p class="sub">2～4 人合作打怪・波次生存射擊</p>
+    <!-- 大廳（未加入任何房間時顯示） -->
+    <div id="lobby">
+      <div class="lobby-card">
+        <h1>Co-op Shooter</h1>
+        <p class="subtitle">2～4 人合作打怪・波次生存・Boss 戰・Roguelike 強化</p>
 
-      <label for="nickname">玩家暱稱（1～12 字元）</label>
-      <div class="row">
-        <input id="nickname" type="text" maxlength="12" autocomplete="off" spellcheck="false" />
-        <button id="dice-btn" class="btn" type="button">隨機</button>
-      </div>
+        <div id="lobby-invite" class="invite-banner" hidden></div>
 
-      <button id="create-btn" class="btn primary" type="button" disabled>建立新房間</button>
+        <label class="field">
+          <span>玩家暱稱（1～12 字元）</span>
+          <div class="row">
+            <input id="nickname" type="text" maxlength="12" autocomplete="off" placeholder="輸入你的暱稱" />
+            <button id="dice-btn" type="button" title="隨機暱稱">隨機</button>
+          </div>
+        </label>
 
-      <div class="divider"><span>或加入現有房間</span></div>
+        <button id="create-btn" class="primary" type="button">建立新房間</button>
 
-      <label for="room-input">房號</label>
-      <div class="row">
-        <input id="room-input" type="text" maxlength="4" placeholder="輸入 4 碼房號" autocomplete="off" spellcheck="false" />
-        <button id="join-btn" class="btn" type="button" disabled>加入房間</button>
-      </div>
+        <div class="divider"><span>或加入現有房間</span></div>
 
-      <div id="lobby-error" role="alert"></div>
-      <div id="lobby-status"></div>
+        <label class="field">
+          <span>房號</span>
+          <div class="row">
+            <input id="room-input" type="text" maxlength="4" autocomplete="off" placeholder="輸入 4 碼房號" />
+            <button id="join-btn" type="button">加入房間</button>
+          </div>
+        </label>
 
-      <div class="legend">
-        <span><i style="background:#3fb950"></i>醫療包 +30 HP</span>
-        <span><i style="background:#58a6ff"></i>散彈強化 8 秒</span>
-        <span><i style="background:#ffd43b"></i>疾風加速 8 秒</span>
-      </div>
-    </div>
-  </div>
+        <p id="lobby-error" class="error" role="alert"></p>
+        <p id="lobby-status" class="status"></p>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="game.js"></script>
-</body>
-</html>
+        <div class="legend">
+          <span><i style="background:#3fb950"></i>醫療包 +30 HP</span>
+          <span><i style="background:#58a6ff"></i>散彈強化 8 秒</span>
